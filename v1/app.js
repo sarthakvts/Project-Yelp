@@ -1,30 +1,38 @@
-var express = require("express");
-var app = express();
-var bodyParser = require("body-parser");
-app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({extended: true}));
+var express = require("express"),
+    app = express(),
+    bodyParser = require("body-parser"), 
+    mongoose = require("mongoose")
 
-var campgrounds = [
-    {name: "Tso Moriri", image:"https://upload.wikimedia.org/wikipedia/commons/3/3b/TsoMoririLake.jpg"},
-    {name: "Camp Exotica", image:"https://cf.bstatic.com/images/hotel/max1280x900/206/206398378.jpg"},
-    {name: "Rishikesh valley", image:"https://pix10.agoda.net/hotelImages/215/2155672/2155672_17040414480052114466.jpg?s=1200x800"},
-    {name: "Chopta", image:"https://www.thegreatnext.com/uploads/trip_media/itinerary_1-620.jpg"},
-    {name: "Tso Moriri", image:"https://upload.wikimedia.org/wikipedia/commons/3/3b/TsoMoririLake.jpg"},
-    {name: "Camp Exotica", image:"https://cf.bstatic.com/images/hotel/max1280x900/206/206398378.jpg"},
-    {name: "Rishikesh valley", image:"https://pix10.agoda.net/hotelImages/215/2155672/2155672_17040414480052114466.jpg?s=1200x800"},
-    {name: "Chopta", image:"https://www.thegreatnext.com/uploads/trip_media/itinerary_1-620.jpg"},
-    {name: "Tso Moriri", image:"https://upload.wikimedia.org/wikipedia/commons/3/3b/TsoMoririLake.jpg"},
-    {name: "Camp Exotica", image:"https://cf.bstatic.com/images/hotel/max1280x900/206/206398378.jpg"},
-    {name: "Rishikesh valley", image:"https://pix10.agoda.net/hotelImages/215/2155672/2155672_17040414480052114466.jpg?s=1200x800"},
-    {name: "Chopta", image:"https://www.thegreatnext.com/uploads/trip_media/itinerary_1-620.jpg"}
-];
+    mongoose.set('useNewUrlParser', true);
+    mongoose.set('useUnifiedTopology', true);
+    mongoose.connect("mongodb://localhost/yelp_camp");
+    app.set("view engine", "ejs");
+    app.use(bodyParser.urlencoded({extended: true}));
+
+//Schema Setup
+var campgroundSchema = new mongoose.Schema({
+    name: String,
+    image: String
+});
+
+var Campground = mongoose.model("Campground", campgroundSchema);
+
+
 
 app.get("/", function(req, res){
     res.render("landing");
 });
 
 app.get("/campgrounds", function(req, res){
-    res.render("campgrounds", {campgrounds:campgrounds});
+    //Get all campgrounds from db
+    Campground.find({}, function(err, allCampgrounds){
+        if(err){
+            console.log(err);
+        } else {
+          res.render("campgrounds", {campgrounds: allCampgrounds});      
+        }
+    });
+    //Render the files
 })
 
 app.post("/campgrounds", function(req, res){
@@ -32,9 +40,13 @@ app.post("/campgrounds", function(req, res){
     var name = req.body.name;
     var image = req.body.image;
     var newCampground = {name: name, image: image};
-    campgrounds.push(newCampground);
-    //redirect back to campgrounds
-    res.redirect("/campgrounds");
+    Campground.create(newCampground, function(err, newlyCreated){
+        if(err){
+            console.log(err);
+        } else {
+            res.redirect("/campgrounds");
+        }
+    });
 });
 
 app.get("/campgrounds/new", function(req, res){
